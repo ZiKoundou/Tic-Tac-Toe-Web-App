@@ -87,16 +87,25 @@ def register():
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        
         user = User.query.filter_by(username=request.form["username"]).first()
+        
+        # Check if the user exists and if the password is correct
         if user and check_password_hash(user.password_hash, request.form["password"]):
             session["user_id"] = user.id
             flash("Login successful!", "success")
+            
+            # Redirect to the admin panel if the user is an admin
+            if user.is_admin:
+                return redirect("/admin")
+            
+            # Redirect to the home page if the user is not an admin
+            return redirect(url_for("home"))
+        
+        # If no user found or password is incorrect
         flash("Invalid login credentials. Please try again.", "danger")
-        if user.is_admin:
-            return redirect("/admin")
-        return redirect(url_for("home"))
+    
     return render_template("login.html")
+
 
 #log out route
 @app.route('/logout')
@@ -124,6 +133,30 @@ def lose():
         db.session.commit()
         flash("You lost this game.", "warning")
     return redirect(url_for("home"))
+
+#admin routes
+@app.route('/admin/reset/<int:user_id>')
+def reset_user_stats(user_id):
+    if "user_id" not in session:
+        flash("You must be logged in.", "danger")
+        return redirect(url_for("login"))
+
+    current_user = User.query.get(session["user_id"])
+    if not current_user.is_admin:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("home"))
+
+    user = User.query.get(user_id)
+    if user:
+        user.wins = 0
+        user.losses = 0
+        db.session.commit()
+        flash(f"Stats reset for user {user.username}.", "info")
+    else:
+        flash("User not found.", "warning")
+
+    return redirect(url_for("home"))
+
 
 if __name__ == '__main__':
     print("Running app from:", os.getcwd())
