@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lobby</title>
+</head>
+<body>
+  <h1>Join a Game</h1>
+  <form action="/play/{{ room_id }}" method="get" onsubmit="event.preventDefault(); location.href='/play/' + document.getElementById('room').value;">
+    <input id="room" placeholder="Enter room name">
+    <button type="submit">Join</button>
+  </form>
+</body>
+</html>
