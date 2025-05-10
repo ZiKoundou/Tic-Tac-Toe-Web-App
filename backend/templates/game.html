@@ -72,6 +72,12 @@
                 document.getElementById('cell' + i).innerText = '';
             }
         });
+
+        socket.on('opponent_joined', ({ opponent }) => {
+            const info = document.createElement('p');
+            info.innerText = `You are playing against ${opponent}`;
+            document.body.insertBefore(info, document.getElementById('board'));
+        });
     </script>
 </body>
 </html>

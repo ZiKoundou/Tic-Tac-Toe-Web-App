@@ -158,7 +158,15 @@ def lobby():
 
 @app.route('/play/<room_id>')
 def play(room_id):
-    user = db.session.get(User, session["user_id"]) if "user_id" in session else None
+    if "user_id" not in session:
+        flash("You must be logged in to play.")
+        return redirect(url_for("login"))
+
+    user = db.session.get(User, session["user_id"])
+    if not user:
+        flash("User not found.")
+        return redirect(url_for("login"))
+
     return render_template("game.html", room_id=room_id, user=user, username=user.username)
 
 @socketio.on('join')
@@ -173,12 +181,19 @@ def on_join(data):
             'players': {}
         }
 
+
+    #if the room is full and ur not in the room, display room is full
     if len(rooms[room]['players']) >= 2 and username not in rooms[room]['players']:
         emit('invalid_move', {'message': 'Room is full!'}, to=request.sid)
         return
 
+    #if user isnt in room add rools
     if username not in rooms[room]['players']:
-        player_role = 'X' if 'X' not in rooms[room]['players'].values() else 'O'
+        player_role = 'X' 
+        #if theres already players make O
+        if len(rooms[room]['players']) >= 1:
+            player_role = 'O'
+
         rooms[room]['players'][username] = player_role
     else:
         player_role = rooms[room]['players'][username]  # if they’re rejoining
@@ -193,6 +208,9 @@ def on_join(data):
 
     if len(rooms[room]['players']) == 2:
         emit('start_game', {'message': 'Game can start!'}, to=room)
+        emit('opponent_joined', {'opponent': rooms[room][1]}, to=room, include_self=False)
+        emit('opponent_joined', {'opponent': rooms[room][0]}, to=request.sid)
+
     
 @socketio.on('make_move')
 def on_move(data):
