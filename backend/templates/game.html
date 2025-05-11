@@ -1,83 +1,90 @@
+<!-- templates/game.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Tic Tac Toe</title>
-  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Room: {{ room_id }}</title>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    /* same grid & cell styling as before… */
+    #board { display: grid; grid-template-columns: repeat(3,100px); grid-gap:5px; }
+    .cell { width:100px; height:100px; display:flex;
+            align-items:center; justify-content:center;
+            font-size:2em; border:1px solid #333; cursor:pointer; }
+  </style>
 </head>
 <body>
+  <header>
     <h1>Room: {{ room_id }}</h1>
-    <h2>You are: {{ user.username }}</h2>
-
-    <div>
-        <p>Welcome, {{ user.username }}! You have {{ user.wins }} wins and {{ user.losses }} losses.</p>
-    </div>
-
-    <div id="board" style="display: grid; grid-template-columns: repeat(3, 100px); gap: 5px;">
-        {% for i in range(9) %}
-        <div onclick="makeMove({{ i }})" style="width:100px;height:100px;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:30px;" id="cell{{ i }}"></div>
-        {% endfor %}
-    </div>
-
-    <button onclick="resetBoard()">Reset</button>
+    <p>Player: {{ username }} ({{ user.wins }}–{{ user.losses }})</p>
     <a href="{{ url_for('logout') }}">Logout</a>
+  </header>
 
-    <script>
-        // Initialize socket connection
-        const socket = io();
+  <div id="board">
+    {% for i in range(9) %}
+      <div id="cell{{i}}" class="cell" onclick="makeMove({{i}})"></div>
+    {% endfor %}
+  </div>
 
-        // Get the room and username from the template variables
-        const room = "{{ room_id }}";
-        const username = "{{ user.username }}";
-        let player = null; 
+  <button id="startBtn" style="display:none;" onclick="startGame()">
+    Start Game
+  </button>
 
-        window.onbeforeunload = function() {
-            socket.emit('leave', { room: room, username: username });
-        };
+  <script>
+    const socket = io();
+    const room     = "{{ room_id }}";
+    const username = "{{ username }}";
+    let player, gameActive=false, currentTurn;
 
-        socket.on('disconnect', function() {
-            socket.emit('leave', { room: room, username: username });
-        });
+    socket.emit('join', { room, username });
 
-        // Emit join event to the server
-        socket.emit('join', { room, username });
+    socket.on('joined', ({ role, board }) => {
+      player = role;
+      board.forEach((sym,i) => {
+        document.getElementById('cell'+i).innerText = sym;
+      });
+    });
 
-        socket.on('joined', ({ username, role, board }) => {
-            console.log(`${username} joined as ${role}`);
-            player = role;
-            for (let i = 0; i < board.length; i++) {
-                document.getElementById('cell' + i).innerText = board[i];
-            }
-        });
+    socket.on('start_game', () => {
+      document.getElementById('startBtn').style.display = 'inline-block';
+    });
 
-        // Handle click on a cell
-        function makeMove(index) {
-            if (player) {
-                socket.emit('make_move', { room, index, player });
-            }
-        }
+    function startGame() {
+      socket.emit('start_game', { room });
+    }
 
+    socket.on('game_started', ({ startingPlayer }) => {
+      document.getElementById('startBtn').style.display = 'none';
+      gameActive=true; currentTurn=startingPlayer;
+      for(let i=0;i<9;i++) document.getElementById('cell'+i).innerText='';
+      if(currentTurn===player) alert("Your turn!");
+    });
 
-        // Listen for updates to the board
-        socket.on('update_board', ({ index, player }) => {
-            document.getElementById('cell' + index).innerText = player;
-        });
+    function makeMove(i) {
+      if(!gameActive||currentTurn!==player) return;
+      socket.emit('make_move',{ room, index:i, player });
+    }
 
-        // Handle board reset
-        function resetBoard() {
-            socket.emit('reset', { room });
-        }
+    socket.on('update_board', ({ index, player: sym, nextTurn }) => {
+      document.getElementById('cell'+index).innerText = sym;
+      if(nextTurn) {
+        currentTurn = nextTurn;
+        if(currentTurn===player) alert("Your turn!");
+      }
+    });
 
-        socket.on('reset_board', () => {
-            for (let i = 0; i < 9; i++) {
-                document.getElementById('cell' + i).innerText = '';
-            }
-        });
+    socket.on('game_over', ({ winner }) => {
+      gameActive=false;
+      if(winner) {
+        alert(winner===username?"You win!":"You lose!");
+      } else {
+        alert("It's a draw!");
+      }
+      document.getElementById('startBtn').style.display='inline-block';
+      setTimeout(()=>location.reload(),1000);
+    });
 
-        socket.on('opponent_joined', ({ opponent }) => {
-            const info = document.createElement('p');
-            info.innerText = `You are playing against ${opponent}`;
-            document.body.insertBefore(info, document.getElementById('board'));
-        });
-    </script>
+    socket.on('invalid_move', ({ message }) => console.warn(message));
+  </script>
 </body>
 </html>

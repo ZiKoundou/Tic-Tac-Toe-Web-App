@@ -1,13 +1,34 @@
+<!-- templates/lobby.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Lobby</title>
+  <meta charset="UTF-8">
+  <title>Join a Lobby</title>
 </head>
 <body>
-  <h1>Join a Game</h1>
-  <form action="/play/{{ room_id }}" method="get" onsubmit="event.preventDefault(); location.href='/play/' + document.getElementById('room').value;">
-    <input id="room" placeholder="Enter room name">
+  <h1>Welcome, {{ user.username }}!</h1>
+  <p>Your record: {{ user.wins }} wins, {{ user.losses }} losses</p>
+
+  <form onsubmit="joinRoom(event)">
+    <label>
+      Lobby name:
+      <input type="text" id="roomInput" placeholder="Enter lobby name" required>
+    </label>
     <button type="submit">Join</button>
   </form>
+
+  <p>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </p>
+
+  <script>
+    function joinRoom(evt) {
+      evt.preventDefault();
+      const room = document.getElementById('roomInput').value.trim();
+      if (room) {
+        window.location.href = '/play/' + encodeURIComponent(room);
+      }
+    }
+  </script>
 </body>
 </html>
