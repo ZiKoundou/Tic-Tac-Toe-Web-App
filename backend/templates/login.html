@@ -1,30 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic-Tac-Toe</title>
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – Tic-Tac-Toe</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to Tic-Tac-Toe</h1>
-        {% if user %}
-            <p>Welcome, {{ user.username }}! You have {{ user.wins }} wins and {{ user.losses }} losses.</p>
-            <a href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-            <a href="{{ url_for('login') }}"></a> 
-            <form method="POST">
-                Username: <input type="text" name="username"><br>
-                Password: <input type="password" name="password"><br>
-                <button type="submit">Login</button>
-            </form>| 
-            <a href="{{ url_for('register') }}">Register</a>
-        {% endif %}
-    </div>
+  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+    <h1 class="text-2xl font-semibold text-center mb-6">Login to Tic-Tac-Toe</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for category, message in messages %}
+          <div class="text-center text-{{ 'red-600' if category=='danger' else 'green-600' if category=='success' else 'gray-600' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="space-y-4">
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        required
+        class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
+      >
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        required
+        class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
+      >
+      <button
+        type="submit"
+        class="start-btn w-full text-white py-2 rounded-lg shadow-md transition duration-300"
+      >
+        Login
+      </button>
+    </form>
+
+    <p class="text-center mt-4 text-gray-600">
+      Don't have an account?
+      <a href="{{ url_for('register') }}" class="text-purple-600 hover:underline">
+        Register
+      </a>
+    </p>
+  </div>
 </body>
 </html>
-
-
-
-
