@@ -1,2 +1,20 @@
-/venv/
-/backend/venv/
+# Virtual environments
+venv/
+backend/venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite database
+*.sqlite3
+
+# Environment variables
+.env
+*.env
+
+# OS-specific
+.DS_Store
+Thumbs.db
