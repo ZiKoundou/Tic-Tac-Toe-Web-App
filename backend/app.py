@@ -7,12 +7,12 @@ import os
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import eventlet
 import eventlet.wsgi
-
+eventlet.monkey_patch()
 rooms = {}  # track board states by room
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet')
 app.secret_key = 'mysecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///default.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
