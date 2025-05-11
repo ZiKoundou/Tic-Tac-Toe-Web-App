@@ -12,14 +12,21 @@
             align-items:center; justify-content:center;
             font-size:2em; border:1px solid #333; cursor:pointer; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 <body>
   <header>
     <h1>Room: {{ room_id }}</h1>
     <p>Player: {{ username }} ({{ user.wins }}–{{ user.losses }})</p>
+    <p id="gameStatus">Waiting for players...</p>
+
     <a href="{{ url_for('logout') }}">Logout</a>
   </header>
 
+    <div id="popupMessage" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%);
+    background:#333; color:white; padding:20px 30px; border-radius:10px; font-size:1.5em; z-index:1000;">
+    </div>
   <div id="board">
     {% for i in range(9) %}
       <div id="cell{{i}}" class="cell" onclick="makeMove({{i}})"></div>
@@ -36,55 +43,82 @@
     const username = "{{ username }}";
     let player, gameActive=false, currentTurn;
 
+    const gameStatus = document.getElementById('gameStatus');
+    gameStatus.style.display = 'block';
+    gameStatus.innerText = "Waiting for players...";
+
     socket.emit('join', { room, username });
 
     socket.on('joined', ({ role, board }) => {
-      player = role;
-      board.forEach((sym,i) => {
+        player = role;
+        board.forEach((sym,i) => {
         document.getElementById('cell'+i).innerText = sym;
-      });
+        });
+        gameStatus.innerText = "Joined as " + player + ". Waiting for another player...";
     });
 
     socket.on('start_game', () => {
-      document.getElementById('startBtn').style.display = 'inline-block';
+        document.getElementById('startBtn').style.display = 'inline-block';
+        gameStatus.innerText = "Both players joined. Click Start Game.";
     });
 
     function startGame() {
-      socket.emit('start_game', { room });
+        socket.emit('start_game', { room });
     }
 
     socket.on('game_started', ({ startingPlayer }) => {
-      document.getElementById('startBtn').style.display = 'none';
-      gameActive=true; currentTurn=startingPlayer;
-      for(let i=0;i<9;i++) document.getElementById('cell'+i).innerText='';
-      if(currentTurn===player) alert("Your turn!");
+        document.getElementById('startBtn').style.display = 'none';
+        gameActive=true; currentTurn=startingPlayer;
+        for(let i=0;i<9;i++) document.getElementById('cell'+i).innerText='';
+        gameStatus.innerText = currentTurn === player ? "Your turn!" : "Opponent's turn...";
     });
 
     function makeMove(i) {
-      if(!gameActive||currentTurn!==player) return;
-      socket.emit('make_move',{ room, index:i, player });
+        if(!gameActive||currentTurn!==player) return;
+        socket.emit('make_move',{ room, index:i, player });
     }
 
     socket.on('update_board', ({ index, player: sym, nextTurn }) => {
-      document.getElementById('cell'+index).innerText = sym;
-      if(nextTurn) {
+        document.getElementById('cell'+index).innerText = sym;
+        if(nextTurn) {
         currentTurn = nextTurn;
-        if(currentTurn===player) alert("Your turn!");
-      }
+        gameStatus.innerText = currentTurn === player ? "Your turn!" : "Opponent's turn...";
+        }
     });
 
     socket.on('game_over', ({ winner }) => {
-      gameActive=false;
-      if(winner) {
-        alert(winner===username?"You win!":"You lose!");
-      } else {
-        alert("It's a draw!");
-      }
-      document.getElementById('startBtn').style.display='inline-block';
-      setTimeout(()=>location.reload(),1000);
-    });
+        gameActive = false;
+
+        let title, icon;
+        if (winner) {
+            if (winner === username) {
+                title = "You win!";
+                icon = "success";
+            } else {
+                title = "You lose!";
+                icon = "error";
+            }
+        } else {
+            title = "It's a draw!";
+            icon = "info";
+        }
+
+        Swal.fire({
+            title: title,
+            icon: icon,
+            confirmButtonText: "OK",
+            allowOutsideClick: false,
+        }).then(() => {
+            location.reload();  // reload after confirmation
+        });
+
+    document.getElementById('startBtn').style.display = 'inline-block';
+});
+
+
 
     socket.on('invalid_move', ({ message }) => console.warn(message));
-  </script>
+    </script>
+
 </body>
 </html>
