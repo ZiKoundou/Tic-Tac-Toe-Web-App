@@ -11,7 +11,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import eventlet
 
-eventlet.monkey_patch()
+#eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
