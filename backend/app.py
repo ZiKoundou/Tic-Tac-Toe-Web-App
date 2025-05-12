@@ -209,13 +209,13 @@ def on_move(data):
 
         emit("update_board", {"index": idx, "player": player, "nextTurn": None}, to=room)
         emit("game_over", {"winner": win_user}, to=room)
-        rooms.pop(room, None)
+        
         return
 
     if '' not in state["board"]:
         emit("update_board", {"index": idx, "player": player, "nextTurn": None}, to=room)
         emit("game_over", {"winner": None}, to=room)
-        rooms.pop(room, None)
+        
         return
 
     nxt = 'O' if player == 'X' else 'X'
@@ -238,7 +238,7 @@ def on_disconnect():
     if not state["players"]:
         rooms.pop(room, None)
     else:
-        emit("opponent_left", {"message": f"{username} left the game."}, to=room)
+        emit("opponent_left", {"message": f"Your Opponent {username} left the game."}, to=room)
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)

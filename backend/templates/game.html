@@ -124,9 +124,16 @@
     socket.emit("manual_logout", { room: room, username: username });
 
     socket.on("opponent_left", (data) => {
-      alert(data.message);
-      window.location.href = "/lobby"; // Redirect to lobby when opponent leaves
+      Swal.fire({
+        title: data.message,   // The message received from the server
+        icon: "warning",       // You can choose the icon type as "warning" for opponent leaving
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+      }).then(() => {
+        window.location.href = "/lobby"; // Redirect to lobby after the message
+      });
     });
+
 
     socket.on('invalid_move', ({ message }) => console.warn(message));
   </script>
