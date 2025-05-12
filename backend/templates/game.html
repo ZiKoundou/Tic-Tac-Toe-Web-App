@@ -1,13 +1,9 @@
-<!-- templates/game.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Room: {{ room_id }}</title>
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
-  <style>
-    /* Same grid & cell styling as before… */
-  </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -120,17 +116,17 @@
       document.getElementById('button').style.display = 'inline-block';
     });
 
-    // Emit logout when a player disconnects
+    
     socket.emit("manual_logout", { room: room, username: username });
 
     socket.on("opponent_left", (data) => {
       Swal.fire({
-        title: data.message,   // The message received from the server
-        icon: "warning",       // You can choose the icon type as "warning" for opponent leaving
+        title: data.message,   
+        icon: "warning",      
         confirmButtonText: "OK",
         allowOutsideClick: false,
       }).then(() => {
-        window.location.href = "/lobby"; // Redirect to lobby after the message
+        window.location.href = "/lobby"; 
       });
     });
 

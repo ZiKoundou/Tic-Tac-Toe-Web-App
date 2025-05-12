@@ -11,6 +11,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import eventlet
 
+#uncomment for railway deployment:
 #eventlet.monkey_patch()
 
 app = Flask(__name__)
@@ -23,8 +24,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode="eventlet")
 
-rooms = {}  # in-memory: room_id → { players: {user: X/O}, board: ['']*9, turn: 'X'|'O' }
-user_sockets = {}  # socket.id → {username, room}
+rooms = {}  
+user_sockets = {} 
 
 def check_win(board):
     winning = [

@@ -3,11 +3,11 @@
   display: grid;
   grid-template-columns: repeat(3, 100px);
 
-  align-items: center;     /* vertical centering */
-  justify-content: center; /* horizontal centering */
+  align-items: center;     
+  justify-content: center; 
   /* border: 2px solid #000; */
-    /* border-radius: 16px; <-- round the board */
-  overflow: hidden;    /* ensures inner cells don’t spill outside */
+    /* border-radius: 16px; */
+  overflow: hidden;    
 }
 
 .cell {
@@ -29,8 +29,8 @@
 }
 
 .cell img {
-  width: 60%;  /* Adjust to the desired icon size */
-  height: 60%; /* Adjust to the desired icon size */
+  width: 60%;  
+  height: 60%; 
   object-fit: contain;
 }
 /* cell animation */
@@ -44,7 +44,7 @@
   animation: pop 0.3s ease-out forwards;
 }
 
-/* Remove outer borders to simulate a shared border grid */
+
 .cell:nth-child(1), .cell:nth-child(2), .cell:nth-child(3) {
   border-top: none;
 }
@@ -59,7 +59,7 @@
 }
 
 
-/* General Layout */
+
 * {
   margin: 0;
   padding: 0;
