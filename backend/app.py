@@ -24,6 +24,7 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode="eventlet")
 
 rooms = {}  # in-memory: room_id → { players: {user: X/O}, board: ['']*9, turn: 'X'|'O' }
+user_sockets = {}  # socket.id → {username, room}
 
 def check_win(board):
     winning = [
@@ -133,34 +134,27 @@ def play(room_id):
         flash("Please log in", "warning")
         return redirect(url_for("login"))
     user = db.session.get(User, session["user_id"])
-    return render_template(
-        "game.html",
-        user=user,
-        room_id=room_id,
-        username=user.username
-    )
+    return render_template("game.html", user=user, room_id=room_id, username=user.username)
 
 
 # ─── Socket Handlers ──────────────────────────────────────────────────────────
 
 @socketio.on("join")
 def on_join(data):
-    room     = data["room"]
+    room = data["room"]
     username = data["username"]
+    
     if room not in rooms:
-        rooms[room] = {
-            "players": {},
-            "board": ['']*9,
-            "turn": None
-        }
+        rooms[room] = {"players": {}, "board": ['']*9, "turn": None}
+
     state = rooms[room]
 
-    # block if full
+    # Block if full
     if len(state["players"]) >= 2 and username not in state["players"]:
-        emit("invalid_move", {"message":"Room is full"}, to=request.sid)
+        emit("invalid_move", {"message": "Room is full"}, to=request.sid)
         return
 
-    # assign X or O
+    # Assign X or O
     if username not in state["players"]:
         sym = 'X' if 'X' not in state["players"].values() else 'O'
         state["players"][username] = sym
@@ -168,13 +162,11 @@ def on_join(data):
         sym = state["players"][username]
 
     join_room(room)
-    # tell client their symbol + current board
     emit("joined", {"role": sym, "board": state["board"]}, to=request.sid)
+    user_sockets[request.sid] = {"username": username, "room": room}
 
-    # if two players now, show Start button
     if len(state["players"]) == 2:
         emit("start_game", {}, to=room)
-
 
 @socketio.on("start_game")
 def on_start_game(data):
@@ -186,57 +178,67 @@ def on_start_game(data):
     state["turn"] = 'X'
     emit("game_started", {"startingPlayer": "X"}, to=room)
 
-
 @socketio.on("make_move")
 def on_move(data):
-    room   = data["room"]
-    idx    = data["index"]
-    player= data["player"]
+    room = data["room"]
+    idx = data["index"]
+    player = data["player"]
     state = rooms.get(room)
+    
     if not state:
+        emit("invalid_move", {"message": "Room no longer exists"}, to=request.sid)
         return
+    
     if state["turn"] != player or state["board"][idx] != '':
-        emit("invalid_move",
-             {"message":"Not your turn or occupied"},
-             to=request.sid)
+        emit("invalid_move", {"message": "Not your turn or occupied"}, to=request.sid)
         return
 
     state["board"][idx] = player
 
-    # win?
     winner_sym = check_win(state["board"])
     if winner_sym:
-        win_user  = next(u for u,s in state["players"].items() if s==winner_sym)
-        lose_user = next(u for u,s in state["players"].items() if s!=winner_sym)
+        win_user = next(u for u, s in state["players"].items() if s == winner_sym)
+        lose_user = next(u for u, s in state["players"].items() if s != winner_sym)
         w = User.query.filter_by(username=win_user).first()
         l = User.query.filter_by(username=lose_user).first()
-        if w: w.wins   += 1
-        if l: l.losses += 1
+        if w:
+            w.wins += 1
+        if l:
+            l.losses += 1
         db.session.commit()
 
-        emit("update_board",
-             {"index": idx, "player": player, "nextTurn": None},
-             to=room)
-        emit("game_over",
-             {"winner": win_user},
-             to=room)
+        emit("update_board", {"index": idx, "player": player, "nextTurn": None}, to=room)
+        emit("game_over", {"winner": win_user}, to=room)
+        rooms.pop(room, None)
         return
 
-    # draw?
     if '' not in state["board"]:
-        emit("update_board",
-             {"index": idx, "player": player, "nextTurn": None},
-             to=room)
+        emit("update_board", {"index": idx, "player": player, "nextTurn": None}, to=room)
         emit("game_over", {"winner": None}, to=room)
+        rooms.pop(room, None)
         return
 
-    # next turn
-    nxt = 'O' if player=='X' else 'X'
+    nxt = 'O' if player == 'X' else 'X'
     state["turn"] = nxt
-    emit("update_board",
-         {"index": idx, "player": player, "nextTurn": nxt},
-         to=room)
+    emit("update_board", {"index": idx, "player": player, "nextTurn": nxt}, to=room)
 
+@socketio.on("disconnect")
+def on_disconnect():
+    info = user_sockets.pop(request.sid, None)
+    if not info:
+        return
+    username = info["username"]
+    room = info["room"]
+
+    state = rooms.get(room)
+    if not state:
+        return
+
+    state["players"].pop(username, None)
+    if not state["players"]:
+        rooms.pop(room, None)
+    else:
+        emit("opponent_left", {"message": f"{username} left the game."}, to=room)
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)

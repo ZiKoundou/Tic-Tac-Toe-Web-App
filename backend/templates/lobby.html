@@ -9,9 +9,11 @@
 </head>
 <body>
   <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg text-center">
-    <h1 class="text-2xl font-semibold mb-4">Welcome, {{ user.username }}!</h1>
-    <p class="mb-6">Record: {{ user.wins }} wins – {{ user.losses }} losses</p>
-
+    <h1 class="text-2xl font-semibold mb-3">Welcome, {{ user.username }}!</h1>
+    <div class="mb-5 text-gray-500">
+    <p>Record: </p>
+    <p>Wins: {{user.wins}} | Losses: {{user.losses}}</p>
+    </div>
     <form onsubmit="joinRoom(event)" class="space-y-4">
       <input
         type="text"
@@ -22,7 +24,7 @@
       >
       <button
         type="submit"
-        class="start-btn w-full text-white py-2 rounded-lg shadow-md transition duration-300"
+        class="button w-full text-white py-2 rounded-lg shadow-md transition duration-300"
       >
         Join Lobby
       </button>
@@ -30,7 +32,7 @@
 
     <button
       onclick="window.location.href='{{ url_for('logout') }}'"
-      class="mt-4 text-purple-600 hover:underline"
+      class="logout-floating text-white py-2 px-4 rounded-lg shadow-md transition duration-300"
     >
       Logout
     </button>

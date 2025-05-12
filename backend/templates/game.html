@@ -6,11 +6,7 @@
   <title>Room: {{ room_id }}</title>
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
   <style>
-    /* same grid & cell styling as before… */
-    /* #board { display: grid; grid-template-columns: repeat(3,100px); grid-gap:5px; }
-    .cell { width:100px; height:100px; display:flex;
-            align-items:center; justify-content:center;
-            font-size:2em; border:1px solid #333; cursor:pointer; } */
+    /* Same grid & cell styling as before… */
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -20,34 +16,31 @@
 </head>
 <body>
   <header>
-    <h1>Room: {{ room_id }}</h1>
-    <p>Player: {{ username }} ({{ user.wins }}–{{ user.losses }})</p>
+    <a href="{{ url_for('logout') }}" class="logout-floating text-white py-2 px-4 rounded-lg shadow-md transition duration-300">Logout</a>
+    <div class="absolute left-1/2 -translate-x-1/2 bg-gray-500 py-2 px-4 rounded-md shadow-md top-11">
+      <h1 class="text-white text-xl font-semibold text-center">Room: {{ room_id }}</h1>
+    </div>
+    
+    <p>Player: {{ username }} </p>
+    <p>Wins: {{user.wins}} | Losses: {{user.losses}}</p>
     <p id="gameStatus">Waiting for players...</p>
-
-    <a href="{{ url_for('logout') }}">Logout</a>
   </header>
-
-    <!-- <div id="popupMessage" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%);
-    background:#333; color:white; padding:20px 30px; border-radius:10px; font-size:1.5em; z-index:1000;">
-    </div> -->
-  <div id="board">
+  
+  <div id="board" class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg text-center">
     {% for i in range(9) %}
       <div id="cell{{i}}" class="cell" onclick="makeMove({{i}})"></div>
     {% endfor %}
   </div>
 
-  <button id="start-btn"
-        class=" start-btn mt-6 hidden  text-white py-2 px-4 rounded-lg shadow-md transition duration-300"
-        onclick="startGame()">
+  <button id="button" class="button mt-6 hidden text-white py-2 px-4 rounded-lg shadow-md transition duration-300" onclick="startGame()">
     Start Game
   </button>
 
-
   <script>
     const socket = io();
-    const room     = "{{ room_id }}";
+    const room = "{{ room_id }}";
     const username = "{{ username }}";
-    let player, gameActive=false, currentTurn;
+    let player, gameActive = false, currentTurn;
 
     const gameStatus = document.getElementById('gameStatus');
     gameStatus.style.display = 'block';
@@ -62,93 +55,80 @@
           cell.innerHTML = '';
           if (sym === 'X' || sym === 'O') {
               const img = document.createElement('img');
-              img.src = sym === 'X'
-                  ? "{{ url_for('static', filename='x.png') }}"
-                  : "{{ url_for('static', filename='o.png') }}";
-              // img.style.width = '20%';
-              // img.style.height = '20%';
-              // img.style.objectFit = 'contain';
+              img.src = sym === 'X' ? "{{ url_for('static', filename='x.png') }}" : "{{ url_for('static', filename='o.png') }}";
               cell.appendChild(img);
           }
       });
       gameStatus.innerText = "Joined as " + player + ". Waiting for another player...";
-  });
-
+    });
 
     socket.on('start_game', () => {
-        document.getElementById('start-btn').style.display = 'inline-block';
-        gameStatus.innerText = "Both players joined. Click Start Game.";
+      document.getElementById('button').style.display = 'inline-block';
+      gameStatus.innerText = "Both players joined. Click Start Game.";
     });
 
     function startGame() {
-        socket.emit('start_game', { room });
+      socket.emit('start_game', { room });
     }
 
     socket.on('game_started', ({ startingPlayer }) => {
-        document.getElementById('start-btn').style.display = 'none';
-        gameActive=true; currentTurn=startingPlayer;
-        for(let i=0;i<9;i++) document.getElementById('cell'+i).innerText='';
-        gameStatus.innerText = currentTurn === player ? "Your turn!" : "Opponent's turn...";
+      document.getElementById('button').style.display = 'none';
+      gameActive = true; currentTurn = startingPlayer;
+      for (let i = 0; i < 9; i++) document.getElementById('cell' + i).innerText = '';
+      gameStatus.innerText = currentTurn === player ? "Your turn!" : "Opponent's turn...";
     });
 
     function makeMove(i) {
-        if(!gameActive||currentTurn!==player) return;
-        socket.emit('make_move',{ room, index:i, player });
+      if (!gameActive || currentTurn !== player) return;
+      socket.emit('make_move', { room, index: i, player });
     }
 
     socket.on('update_board', ({ index, player: sym, nextTurn }) => {
       const cell = document.getElementById('cell' + index);
       const img = document.createElement('img');
-      img.src = sym === 'X'
-          ? "{{ url_for('static', filename='x.png') }}"
-          : "{{ url_for('static', filename='o.png') }}";
-      // img.style.width = '1px';
-      // img.style.height = '1px';
-      // img.style.objectFit = 'contain';
-
-      // Clear the cell and add the image
+      img.src = sym === 'X' ? "{{ url_for('static', filename='x.png') }}" : "{{ url_for('static', filename='o.png') }}";
+      img.classList.add('pop-animation');
       cell.innerHTML = '';
       cell.appendChild(img);
 
-      if(nextTurn) {
+      if (nextTurn) {
         currentTurn = nextTurn;
         gameStatus.innerText = currentTurn === player ? "Your turn!" : "Opponent's turn...";
       }
     });
 
     socket.on('game_over', ({ winner }) => {
-        gameActive = false;
+      gameActive = false;
+      let title, icon;
+      if (winner) {
+        title = winner === username ? "You win!" : "You lose!";
+        icon = winner === username ? "success" : "error";
+      } else {
+        title = "It's a draw!";
+        icon = "info";
+      }
 
-        let title, icon;
-        if (winner) {
-            if (winner === username) {
-                title = "You win!";
-                icon = "success";
-            } else {
-                title = "You lose!";
-                icon = "error";
-            }
-        } else {
-            title = "It's a draw!";
-            icon = "info";
-        }
+      Swal.fire({
+        title: title,
+        icon: icon,
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+      }).then(() => {
+        location.reload();
+      });
 
-        Swal.fire({
-            title: title,
-            icon: icon,
-            confirmButtonText: "OK",
-            allowOutsideClick: false,
-        }).then(() => {
-            location.reload();  // reload after confirmation
-        });
+      document.getElementById('button').style.display = 'inline-block';
+    });
 
-    document.getElementById('start-btn').style.display = 'inline-block';
-});
+    // Emit logout when a player disconnects
+    socket.emit("manual_logout", { room: room, username: username });
 
-
+    socket.on("opponent_left", (data) => {
+      alert(data.message);
+      window.location.href = "/lobby"; // Redirect to lobby when opponent leaves
+    });
 
     socket.on('invalid_move', ({ message }) => console.warn(message));
-    </script>
-
+  </script>
 </body>
 </html>
