@@ -108,8 +108,10 @@ def login():
         if user and check_password_hash(user.password_hash, p):
             session["user_id"] = user.id
             flash("Logged in!", "success")
+            if user.is_admin:
+                return redirect("/admin")
             return redirect(url_for("lobby"))
-        flash("Invalid credentials", "danger")
+
     return render_template("login.html")
 
 
