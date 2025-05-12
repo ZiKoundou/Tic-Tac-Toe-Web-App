@@ -13,6 +13,7 @@
     <div class="mb-5 text-gray-500">
     <p>Record: </p>
     <p>Wins: {{user.wins}} | Losses: {{user.losses}}</p>
+    
     </div>
     <form onsubmit="joinRoom(event)" class="space-y-4">
       <input
@@ -24,10 +25,12 @@
       >
       <button
         type="submit"
-        class="button w-full text-white py-2 rounded-lg shadow-md transition duration-300"
+        class="button w-full text-white py-2 rounded-lg shadow-md transition duration-300 "
       >
         Join Lobby
       </button>
+      <!-- <a href="{{ url_for('leaderboard') }}" class="mt-4 block text-center hover:underline">View Leaderboard</a> -->
+
     </form>
 
     <button
@@ -37,8 +40,26 @@
       Logout
     </button>
   </div>
+  <div>
+  <div id="roomList" class="mt-6 text-left ">
+    <h2 class="text-lg font-medium mb-2 text-center">Available Lobbies:</h2>
+    <table class="min-w-full border text-left" id="roomsTable">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="py-2 px-4 border">Lobby Name</th>
+          <th class="py-2 px-4 border">Action</th>
+        </tr>
+      </thead>
+      <tbody id="roomsBody">
+        <!-- Rooms will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+  </div>
+
 
   <script>
+
     function joinRoom(evt) {
       evt.preventDefault();
       const room = document
@@ -48,6 +69,40 @@
         window.location.href = '/play/' + encodeURIComponent(room);
       }
     }
-  </script>
+  function joinRoomDirect(room) {
+    window.location.href = '/play/' + encodeURIComponent(room);
+  }
+
+  async function fetchRooms() {
+    const res = await fetch('/available_rooms');
+    const rooms = await res.json();
+    const tableBody = document.getElementById('roomsBody');
+    tableBody.innerHTML = '';
+
+    if (rooms.length === 0) {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td colspan="2" class="py-2 px-4 text-gray-400 text-center">No available lobbies.</td>`;
+      tableBody.appendChild(row);
+    } else {
+      rooms.forEach(room => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50";
+        row.innerHTML = `
+          <td class="py-2 px-4 border">${room}</td>
+          <td class="py-2 px-4 border">
+            <button onclick="joinRoomDirect('${room}')" class="button w-full text-white py-2 rounded-lg shadow-md transition duration-300 ">
+              Join
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+  }
+
+  fetchRooms();
+  setInterval(fetchRooms, 5000); // Refresh every 5 seconds
+</script>
+
 </body>
 </html>

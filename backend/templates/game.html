@@ -31,7 +31,12 @@
   <button id="button" class="button mt-6 hidden text-white py-2 px-4 rounded-lg shadow-md transition duration-300" onclick="startGame()">
     Start Game
   </button>
-
+  <button
+      onclick="window.location.href='{{ url_for('lobby') }}'"
+      class="back-floating text-white py-2 px-4 rounded-lg shadow-md transition duration-300"
+    >
+      Back
+    </button>
   <script>
     const socket = io();
     const room = "{{ room_id }}";

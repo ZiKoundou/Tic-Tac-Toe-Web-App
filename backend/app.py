@@ -2,7 +2,7 @@
 import os
 from flask import (
     Flask, render_template, request, redirect,
-    url_for, flash, session
+    url_for, flash, session, jsonify
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
@@ -26,6 +26,9 @@ socketio = SocketIO(app, async_mode="eventlet")
 
 rooms = {}  
 user_sockets = {} 
+
+def get_open_rooms():
+    return [room for room, data in rooms.items() if len(data["players"]) == 1 and not data.get("cpu")]
 
 def check_win(board):
     winning = [
@@ -138,6 +141,15 @@ def play(room_id):
         return redirect(url_for("login"))
     user = db.session.get(User, session["user_id"])
     return render_template("game.html", user=user, room_id=room_id, username=user.username)
+
+@app.route("/leaderboard")
+def leaderboard():
+    top_users = User.query.order_by(User.wins.desc()).limit(5).all()
+    return render_template("leaderboard.html", users=top_users)
+
+@app.route("/available_rooms")
+def available_rooms():
+    return jsonify(get_open_rooms())
 
 
 # ─── Socket Handlers ──────────────────────────────────────────────────────────
