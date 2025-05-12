@@ -120,7 +120,9 @@ p {
     background-color: #7066e0;
     transition: all 0.3s ease;
 }
-
+.purple {
+  background-color: #7066e0;
+}
 .back-floating:hover {
     background-color: #5a52b7;
     transform: scale(1.1);

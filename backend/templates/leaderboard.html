@@ -3,28 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <title>Leaderboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    <h1>🏆 Top 5 Players</h1>
-    <table border="1">
-        <tr>
-            <th>Rank</th>
-            <th>Username</th>
-            <th>Wins</th>
-            <th>Losses</th>
-        </tr>
-        {% for user in users %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.wins }}</td>
-            <td>{{ user.losses }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <br>
-    <a href="{{ url_for('lobby') }}">Back to Lobby</a>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+    <button
+        onclick="window.location.href='{{ url_for('lobby') }}'"
+        class="back-floating text-white py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition"
+    >
+        Back 
+    </button>
+
+    <h1 class="text-4xl font-bold text-gray-800 mb-8">🏆 Top 5 Players</h1>
+
+    <div class="w-full max-w-4xl">
+        <table class="min-w-full border border-gray-300 bg-white shadow-md rounded-lg overflow-hidden">
+            <thead class="purple text-white">
+                <tr>
+                    <th class="py-3 px-4 text-left">Rank</th>
+                    <th class="py-3 px-4 text-left">Username</th>
+                    <th class="py-3 px-4 text-left">Wins</th>
+                    <th class="py-3 px-4 text-left">Losses</th>
+                    <th class="py-3 px-4 text-left">Win Rate (%)</th>
+                    <th class="py-3 px-4 text-left">Games Played</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-700">
+                {% for user in users %}
+                {% set games = user.wins + user.losses %}
+                <tr class="hover:bg-indigo-100 transition duration-200">
+                    <td class="py-2 px-4">{{ loop.index }}</td>
+                    <td class="py-2 px-4">{{ user.username }}</td>
+                    <td class="py-2 px-4">{{ user.wins }}</td>
+                    <td class="py-2 px-4">{{ user.losses }}</td>
+                    <td class="py-2 px-4">
+                        {% if games > 0 %}
+                            {{ ('%.1f' % ((user.wins / games) * 100)) }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td class="py-2 px-4">{{ games }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

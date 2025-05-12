@@ -32,10 +32,10 @@
     Start Game
   </button>
   <button
-      onclick="window.location.href='{{ url_for('lobby') }}'"
-      class="back-floating text-white py-2 px-4 rounded-lg shadow-md transition duration-300"
+        onclick="window.location.href='{{ url_for('lobby') }}'"
+        class="back-floating text-white py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition"
     >
-      Back
+        Back 
     </button>
   <script>
     const socket = io();

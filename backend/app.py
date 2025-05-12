@@ -10,6 +10,8 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import eventlet
+from sqlalchemy import func
+
 
 #uncomment for railway deployment:
 #eventlet.monkey_patch()
@@ -142,10 +144,24 @@ def play(room_id):
     user = db.session.get(User, session["user_id"])
     return render_template("game.html", user=user, room_id=room_id, username=user.username)
 
+from sqlalchemy import func
+
+from sqlalchemy import func
+
 @app.route("/leaderboard")
 def leaderboard():
-    top_users = User.query.order_by(User.wins.desc()).limit(5).all()
+    win_rate = (User.wins / func.nullif(User.wins + User.losses, 0)).label('win_rate')
+
+    top_users = (
+        db.session.query(User)
+        .filter((User.wins + User.losses) >= 5)  # Only include users with at least 5 games
+        .order_by(win_rate.desc(), User.wins.desc())
+        .limit(10)
+        .all()
+    )
+
     return render_template("leaderboard.html", users=top_users)
+
 
 @app.route("/available_rooms")
 def available_rooms():
