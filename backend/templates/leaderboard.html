@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+    <p class="py-6">Note: to be on ranked leaderboard you must play at least 5 games</p>
     <button
         onclick="window.location.href='{{ url_for('lobby') }}'"
         class="back-floating text-white py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition"
