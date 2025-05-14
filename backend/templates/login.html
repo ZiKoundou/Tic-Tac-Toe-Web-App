@@ -9,11 +9,11 @@
 </head>
 <body>
   <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
-    <h1 class="text-2xl font-semibold text-center mb-6">Login to Tic-Tac-Toe</h1>
+    <h1 class="text-2xl font-semibold text-center mb-5">Login to Tic-Tac-Toe</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="space-y-2 mb-4">
+      <div class="mb-2">
         {% for category, message in messages %}
           <div class="text-center text-{{ 'red-600' if category=='danger' else 'green-600' if category=='success' else 'gray-600' }}">
             {{ message }}
@@ -22,6 +22,7 @@
       </div>
     {% endif %}
     {% endwith %}
+    
 
     <form method="POST" class="space-y-4">
       <input
@@ -52,6 +53,12 @@
         Register
       </a>
     </p>
+    <form action="/guest-login" method="POST">
+      <button type="submit" class="gray-button w-full text-white py-2 mt-4 rounded-lg shadow-md transition duration-300">Play as Guest</button>
+    </form>
+    <a class="block text-base text-center mt-1 text-red-300"> Note: stats aren't saved as guest</a>
+    
   </div>
+
 </body>
 </html>

@@ -102,6 +102,16 @@ p {
   transform: scale(1.1);
 }
 
+.gray-button {
+  background-color: #a9a6c2;
+  transition: all 0.3s ease;
+}
+
+.gray-button:hover {
+  background-color: rgb(92, 91, 103);
+  transform: scale(1.1);
+}
+
 
 .logout-floating {
     position: fixed;

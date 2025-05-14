@@ -11,6 +11,8 @@ from flask_admin.contrib.sqla import ModelView
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import eventlet
 from sqlalchemy import func
+import random
+import string
 
 
 #uncomment for railway deployment:
@@ -31,6 +33,9 @@ user_sockets = {}
 
 def get_open_rooms():
     return [room for room, data in rooms.items() if len(data["players"]) == 1 and not data.get("cpu")]
+
+def generate_guest_name():
+    return 'Guest' + ''.join(random.choices(string.digits, k=4))
 
 def check_win(board):
     winning = [
@@ -84,6 +89,12 @@ def home():
         return redirect(url_for("lobby"))
     return redirect(url_for("login"))
 
+@app.route('/guest-login', methods=['POST'])
+def guest_login():
+    guest_name = generate_guest_name()
+    session['username'] = guest_name
+    session['is_guest'] = True
+    return redirect('/lobby')  # Or wherever your game starts
 
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -129,24 +140,33 @@ def logout():
 
 @app.route("/lobby", methods=["GET"])
 def lobby():
-    if "user_id" not in session:
+    if "user_id" in session:
+        user = db.session.get(User, session["user_id"])
+        return render_template("lobby.html", user=user)
+    elif session.get("is_guest") and session.get("username"):
+        guest = type("Guest", (), {})()  # Create a dummy object
+        guest.username = session["username"]
+        guest.wins = guest.losses = None
+        return render_template("lobby.html", user=guest)
+    else:
         flash("Please log in", "warning")
         return redirect(url_for("login"))
-    user = db.session.get(User, session["user_id"])
-    return render_template("lobby.html", user=user)
 
 
 @app.route("/play/<room_id>")
 def play(room_id):
-    if "user_id" not in session:
+    if "user_id" not in session and not session.get("is_guest"):
         flash("Please log in", "warning")
         return redirect(url_for("login"))
-    user = db.session.get(User, session["user_id"])
-    return render_template("game.html", user=user, room_id=room_id, username=user.username)
+        # Get username
+    if session.get("is_guest"):
+        username = session["username"]
+        user = None
+    else:
+        user = db.session.get(User, session["user_id"])
+        username = user.username
+    return render_template("game.html", user=user, room_id=room_id, username=username)
 
-from sqlalchemy import func
-
-from sqlalchemy import func
 
 @app.route("/leaderboard")
 def leaderboard():

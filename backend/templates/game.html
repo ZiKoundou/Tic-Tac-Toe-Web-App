@@ -18,7 +18,12 @@
     </div>
     
     <p>Player: {{ username }} </p>
-    <p>Wins: {{user.wins}} | Losses: {{user.losses}}</p>
+    {%if user%}
+      <p>Wins: {{user.wins}} | Losses: {{user.losses}}</p>
+    {%else%}
+      <a class="block text-base text-center mt-1 text-red-300"> Note: stats aren't saved as guest</a>
+      <p>Wins: N/A | Losses: N/A </p>
+    {%endif%}
     <p id="gameStatus">Waiting for players...</p>
   </header>
   
@@ -36,7 +41,7 @@
         class="back-floating text-white py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition"
     >
         Back 
-    </button>
+  </button>
   <script>
     const socket = io();
     const room = "{{ room_id }}";
